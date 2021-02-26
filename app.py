@@ -1,5 +1,53 @@
-# Admin Dashboard 
-# -*- coding: utf-8 -*-
+# Admin 
+import base64
+import io
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import plotly.graph_objs as go
+import pandas as pd
+import pathlib
+from dash.dependencies import Input, Output, State
+from scipy import stats
+import xlrd
+import plotly.express as px
+import dash_table
+import pyrebase
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt 
+import seaborn as sns; sns.set()
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+import os 
+import threading
+import numpy as np
+import pandas as pd 
+import matplotlib.pyplot as plt 
+import seaborn as sns; sns.set()
+import sklearn
+import xlrd
+import xgboost
+from sklearn import linear_model
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from sklearn.model_selection import GridSearchCV
+import warnings
+import schedule
+import time
+
+warnings.filterwarnings("ignore")
+credential_path = './fire.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
+cred = credentials.Certificate(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
+firebase_admin.initialize_app(cred)
+
+
 db = firestore.client()
 Actions = list(db.collection(u'Nitrous').document(u'Actions').collection(u'Actions').stream())
 Actions = list(map(lambda x: x.to_dict(), Actions))
@@ -211,7 +259,6 @@ server = app.server
 app.title = 'Nitrous Admin Dashboard'
 
 df.dropna(inplace=True)
-print('in Nitrous')
 fig1 =px.sunburst(df, path=['startYear','startMonth','title', 'topic'], values='duration')
 fig2 =px.sunburst(df, path=['startYear','startMonth','username'], values='duration')
 

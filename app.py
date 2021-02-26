@@ -1,48 +1,5 @@
 # Admin Dashboard 
 # -*- coding: utf-8 -*-
-import base64
-import io
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-import plotly.graph_objs as go
-import pandas as pd
-import pathlib
-from dash.dependencies import Input, Output, State
-from scipy import stats
-import xlrd
-import plotly.express as px
-import dash_table
-import pyrebase
-import pandas as pd 
-import numpy as np
-import matplotlib.pyplot as plt 
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
-import os 
-import threading
-import sklearn
-import xlrd
-import xgboost
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from sklearn.model_selection import GridSearchCV
-import warnings
-import time 
-import schedule
-warnings.filterwarnings("ignore")
-
-credential_path = './fire.json'
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
-cred = credentials.Certificate(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
-firebase_admin.initialize_app(cred)
-
-# ###################################################### Talking to Firebase 
 db = firestore.client()
 Actions = list(db.collection(u'Nitrous').document(u'Actions').collection(u'Actions').stream())
 Actions = list(map(lambda x: x.to_dict(), Actions))
@@ -67,13 +24,15 @@ df['username'] = df['username'].replace( 'nahla.khaled','nahla khaled')
 df['username'] = df['username'].replace('amansour','mansour' )
 # Replacing -ve value with 120 mins
 df['duration']=df['duration'].mask(df['duration'] < 0, 120)
-df=df[42:]
 df.dropna(subset=['powerBar'], inplace = True)
-
+# Starting since 2021
+df=df.loc[df['startYear'].isin([21])] 
+df.dropna(subset=['powerBar'], inplace = True)
 df=df.reset_index(drop=True)
+
 users = df['username'].unique()
 dataframes=[]
-banned_list =['hossary','mostafa','mostaf']
+banned_list =['hossary','mostafa','mostaf','yyyy','gracegarcia']
 clean = pd.DataFrame(np.zeros((15, 9)))
 clean.columns = ["Int. Comm","Ext. Comm","Learn","Tech","Reletive","Break","Teach","Total Hours","UserName"]
 i=-1
@@ -81,31 +40,34 @@ Names=[]
 for j, user in enumerate( users) :
     if not user in banned_list :
         i+=1
-
         Names.append(user)
         hk = df.groupby('username') 
         df_user=hk.get_group(user)
-        df_user=df_user.reset_index(drop=True)
-
+        df_user=df_user.reset_index(drop=True)        
         df_user=df_user.rename(columns={'startYear':"year", 'startMonth':"month", 'startDay':"day", 'startHour':"hour", 'startMin':"minute"})
-        df_user['year'] = df_user['year'].replace([20],2020)
-
+        df_user['year'] = df_user['year'].replace([21],2021)
+        
         dataframes.append(df_user)
-        # to export  to excel 
-        #dataframes[i].to_excel(str(user)+'_df.xlsx')
-N=len(users)-len(banned_list)
-x=pd.to_datetime(dataframes[1][['year', 'month', 'day', 'hour', 'minute']])
-g=pd.DataFrame(x,columns=['date'])
-dataframes[1]=pd.concat([g,dataframes[1]],axis=1)
-dataframes[1]['week_number_of_year'] = dataframes[1]['date'].dt.week
-num=max(dataframes[1]['week_number_of_year'].values)-min(dataframes[1]['week_number_of_year'].values)
-num=num+1
+
+users=Names
+N=len(users)
+for z in range(N):
+    x=pd.to_datetime(dataframes[1][['year', 'month', 'day', 'hour', 'minute']])
+    g=pd.DataFrame(x,columns=['date'])
+    dataframes[z]=pd.concat([g,dataframes[z]],axis=1)
+    dataframes[z]['week_number_of_year'] = dataframes[z]['date'].dt.week
+    dataframes[z]=dataframes[z].dropna()
+    
+from datetime import datetime
+b=datetime.now()
+num=int(b.strftime("%V"))
 
 dataforml=[0] * N
 
 l=[]
-for v in range (35,35+num):
+for v in range (0,num):
     l.append(v)
+    
 for k in range(N-1):
     dataforml[k] = pd.DataFrame(np.zeros((num, 9)), index =l)
     dataforml[k].columns = ["Int.Comm","Ext.Comm","Learn","Tech","Reletive","Break","Teach","Total Hours","UserName"]
@@ -240,7 +202,7 @@ for k in range (len(Names)):
                         u'class6': int(current_states[k][5]),
         })
     except:
-        pass
+        print ('This User '+str(Names[k]+' has no actions'))
 
 ########################################################## Dash   
 app =dash.Dash()
@@ -325,4 +287,3 @@ app.layout=html.Div([
 
 while( __name__ == '__main__'):
     app.run_server(debug=True)
-    
